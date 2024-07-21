@@ -6,7 +6,7 @@ def home_():
     st.title("Insurance Viewer")
     st.write("*This app is a way you can use to predict insurance charge based on ***Age,Sex,bmi,Region ,Children,Smoker.****")
 
-    st.write("You can upload csv file or excel,complete a form and even chat with a bot powered by llm to give you he appropriate prediction.")
+    st.write("You can upload csv file or excel,complete a form and even chat with a bot powered by llm to give you an appropriate prediction.")
     st.image("images/homeview.jpeg")
 
 
