@@ -126,7 +126,7 @@ System_prompt = """
     Option 2: You respond to the human.
     For this,you should use the following format:
     Action: Response To Human
-    Action Input: "your response to the human, summarizing what you did and what you learned"
+    Action Input: "your response to the human, summarizing what you did and what you learned with the user language"
     
     Begin!
     """
