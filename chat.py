@@ -160,7 +160,7 @@ def Stream_agent(prompt):
             action_input=ast.literal_eval(action_input)
             return action,action_input
         
-        action_input=re.findall(r"Action Input: (.+?)\n",text)
+        action_input=re.findall(r"Action Input: \"(.+?)\"",text)
         return action,action_input
        
         
@@ -189,7 +189,7 @@ def Stream_agent(prompt):
 
         elif action[-1]=="Response To Human":
             #print(action_input[-1])
-            tool=action_input[-1]
+            return action_input[-1]
         observation=tool
         #except:
         #observation="Pour effectuer cette prédiction il faut nécessairemnt 5 caractéristiques soient : 'sex', 'bmi', 'children', 'smoker', et 'region' ."
