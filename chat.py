@@ -10,14 +10,14 @@ from google.generativeai import client
 import google.generativeai as genai
 import re
 import json
+import time
 import ast
 from form import predict_insurance
-#from form import predict_insurance
 #age,sex,bmi,children,smoker,region
 
 
 
-def base(query:str):
+def explain(query:str):
     api_key="AIzaSyDebvFeAS_ECJlbKImDBl4mqQRPgg6zEjQ"
 
 
@@ -92,12 +92,11 @@ def predict(attribute_list):
     prediction=predict_insurance(age,sex,bmi,children,smoker,region)   
     return f"En nous basant sur vos données on peut dire que le montant qui correspond au profil décrit est: {prediction[0]}"
 
-def explain(query):
-    return "explanation"
+
 
 
 #api_key='AIzaSyDebvFeAS_ECJlbKImDBl4mqQRPgg6zEjQ'
-api_key="AIzaSyA6J3u2hL4jNsFE67yy2q75KV9BSkdLHnI"
+api_key="AIzaSyDHwaNIiY_Z6BxXMwUdh37189j1XSKYaTE"
 analyzer=genai.GenerativeModel("gemini-pro")
 genai.configure(api_key=api_key)
 System_prompt = """
@@ -105,23 +104,26 @@ System_prompt = """
 
     You have access to the following tools:
 
-    Predict: useful for when you need to make a prediction based on age,sex,bmi,children,smoker and region.if one of these element is null say  directly to user what is omitted else if more elements are given use only the necessary 
-    Explain: Useful for when you need to explain a prediction or behaviour for charges in insurance cases on basis of your data to answer.
-    Response To Human:When you need to respond to the human you are talking to.
+        -Predict: Useful  when you need to make a prediction based on age,sex,bmi,children,smoker and region.if one of these element is null say  directly to user what is omitted else if more elements are given use only the necessary .
+
+        -Explain: Useful when you need to explain prediction/behaviour for charges in insurance cases only using your data.
+
+        -Response To Human: When you need to respond to the human you are talking to.
+
     You will receive a message from the human, then  you should choose between one of these two options  to powered your answer.
 
     Option 1 : You use a tool to answer the question.
     For this, you should use the following format:
     Thought: you should always think about what to do
     Action: the action to take, should be one of [Predict,Explain]
-    Action Input: "the input to the action, to be sent to the tool.Warning: especially in predict use the format {'age':21,'sex':'male','bmi':16,'children':2,'smoker':yes/no,'region':'southeast'}"
+    Action Input: "the input to the action, to be sent to the tool.Warning: especially in predict use the format {'age':21,'sex':'male','bmi':16,'children':2,'smoker':yes/no,'region':'southeast'}".
 
     After this,the human  will respond with an observation, and you will continue.
 
     Option 2: You respond to the human.
     For this,you should use the following format:
-    Action:Response To Human
-    Action Input: your response to the human, summarizing what you did and what you learned"
+    Action: Response To Human
+    Action Input: "your response to the human, summarizing what you did and what you learned"
     
     Begin!
     """
@@ -144,54 +146,60 @@ def Stream_agent(prompt):
         action_pattern=r"Action: (.+?)\n"
         input_pattern=r"\{.*\}"
         action=re.findall(action_pattern,text)
-        action_input_match=re.search(input_pattern,text)
-        action_input=action_input_match.group()
-        #print("match",action_input)
-        #action_input_match = re.sub(r'(\w+):', r'"\1":', action_input_match)
-       # action_input_match= action_input_match.replace('\'', '\"').replace(': ', ':').replace(', ', ',')
-        #pattern = r'=(\s*[^,]*)'
-        #action_input = re.findall(pattern, action_input_match)
-        action_input=ast.literal_eval(action_input)
+        if str(action)=="['Predict']":
+            action_input_match=re.search(input_pattern,text)
+            action_input=action_input_match.group()
+            #print("match",action_input)
+            #action_input_match = re.sub(r'(\w+):', r'"\1":', action_input_match)
+        # action_input_match= action_input_match.replace('\'', '\"').replace(': ', ':').replace(', ', ',')
+            #pattern = r'=(\s*[^,]*)'
+            #action_input = re.findall(pattern, action_input_match)
+            action_input=ast.literal_eval(action_input)
+            return action,action_input
+        
+        action_input=re.findall(r"Action Input: (.+?)\n",text)
         return action,action_input
-    
+       
+        
+    while True:
         #message="What can you say me?"
 
-    response=analyzer.generate_content(prompt)
-    response_text=analyzer.generate_content(system_text(system=System_prompt,prompt=prompt)).text
-    print(response_text)
+        #response=analyzer.generate_content(prompt)
+        response_text=analyzer.generate_content(system_text(system=System_prompt,prompt=prompt)).text
+        print(response_text)
 
-    #
-    # time.sleep(20)
-    tool=None
-    action,action_input=extract_action_and_input(response_text)
-    print("actttt",action)
-    print("inputtt",list(action_input.values()))
-    #try:
-    if action[-1]=="Predict":
-        print("action input",action_input)
-        print(action_input)
-        tool=predict(action_input.values())
-        #print(tool)
-        #print("tool",tool)
-    elif action[-1]=="Explain":
-        tool=explain(action[-1])
+        #
+        time.sleep(20)
+        tool=None
+        action,action_input=extract_action_and_input(response_text)
+        print("actttt",action)
+        print("inputtt",action_input)
+        #try:
+        if action[-1]=="Predict":
+            print("action input",action_input)
+            print(action_input)
+            tool=predict(action_input.values())
+            #print(tool)
+            #print("tool",tool)
+        elif action[-1]=="Explain":
+            tool=explain(action[-1])
 
-    elif action[-1]=="Response To Human":
-        #print(action_input[-1])
-        tool=action_input[-1]
-    observation=tool
-    #except:
-     #observation="Pour effectuer cette prédiction il faut nécessairemnt 5 caractéristiques soient : 'sex', 'bmi', 'children', 'smoker', et 'region' ."
+        elif action[-1]=="Response To Human":
+            #print(action_input[-1])
+            tool=action_input[-1]
+        observation=tool
+        #except:
+        #observation="Pour effectuer cette prédiction il faut nécessairemnt 5 caractéristiques soient : 'sex', 'bmi', 'children', 'smoker', et 'region' ."
 
-   
-    print("Observation:",observation)
-    return observation 
+    
+        print("Observation:",observation)
+        return observation 
 #print(Stream_agent("Explain me how charges is given to person in insurance case"))
 #print(Stream_agent("Je voudrais que tu me prédises le montant à partir d'un IMC de 16. Il faut aussi savoir que la personne fume, a 2 enfants à charge, et son garant est une femme.Il vient de sud-Est et à 21ans"))
-print(Stream_agent("Je voudrais que tu me prédise le montant à partir d'un bmi de 16,un sexe masculin,il faut ausssi savoir que la persone fume, a 2 enfants à charge et soon garant une femme.il vient du Sud-Est,il a 21 ans"))
-
+#print(Stream_agent("Je voudrais que tu me prédise le montant à partir d'un bmi de 16,un sexe masculin,il faut ausssi savoir que la persone fume, a 2 enfants à charge et soon garant une femme.il vient du Sud-Est,il a 21 ans"))
+#print(explain("Explain me how charges is given to person in insurance case"))
   
-"""
+
 # Configuration de l'interface
 
 st.title("InSu")
@@ -215,6 +223,6 @@ if user_input:
 # Affichage de l'historique des messages
 for message in st.session_state.messages:
     st.write(message)
-"""
+
 
 #print(main("Comment tu vas?"))
