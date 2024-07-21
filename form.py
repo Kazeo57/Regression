@@ -3,12 +3,16 @@ import streamlit as st
 from PIL import Image
 #import plotly.express as px
 import joblib 
+import os
 #new_data=pd.DataFrame({"age":age,"sex":sex,"bmi":bmi,"children":children,"smoker":smoker,"region":region})
 def predict_insurance(age,sex,bmi,children,smoker,region):
     new_data=pd.DataFrame({"age":[age],"sex":[sex],"bmi":[bmi],"children":[children],"smoker":[smoker],"region":[region]})
-    best_model=joblib.load('best_insurance.pkl')
-    scalers=joblib.load('scalers.pkl')
-    region_encoder=joblib.load("region_encoder.pkl")
+    #best_model=joblib.load('best_insurance.pkl')
+    best_model=joblib.load(os.path.join(os.path.dirname(__file__), 'best_insurance.pkl'))
+    #scalers=joblib.load('scalers.pkl')
+    scalers=joblib.load(os.path.join(os.path.dirname(__file__), 'scalers.pkl'))
+    #region_encoder=joblib.load("region_encoder.pkl")
+    region_encoder=joblib.load(os.path.join(os.path.dirname(__file__), 'region_encoder.pkl'))
     new_data['sex'].replace(['male','female'],[0,1],inplace=True)
     new_data['smoker'].replace(['no','yes'],[0,1],inplace=True)
     new_data["region"]=region_encoder.transform(new_data[["region"]])
@@ -16,9 +20,9 @@ def predict_insurance(age,sex,bmi,children,smoker,region):
     
     for i in new_data.columns:
         if i in scalers:
-            print(i)
+            #print(i)
             scaler=scalers[f"{i}"]
-            print(scaler)
+            #print(scaler)
             new_data[[f"{i}"]]=scaler.transform(new_data[[f"{i}"]])
             
     
