@@ -20,6 +20,8 @@ def home_():
 pages=st.navigation([st.Page(home_,title="Home"),
         st.Page("form.py",title="Form"),
         st.Page("drag.py",title="Drag File"),
-        st.Page("chat.py",title="Chat")])
+        st.Page("chat.py",title="Chat"),
+        st.Page("doc.py",title="Overview")
+        ])
     
 pages.run()
